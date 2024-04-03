@@ -1,0 +1,45 @@
+.title {
+  font-size: 200%;
+  margin-top: 15%;
+  text-align: center;
+}
+
+.subtitle {
+  font-size: 100%;
+  margin-top: 2%;
+  text-align: center;
+}
+
+.btn-group {
+  margin-top: 2%;
+  text-align: center;
+}
+
+/* Button animations */
+.outline {
+  font-size: 100%;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.outline:hover {
+  background-color: #655CD6;
+  color: #fff;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .title {
+      font-size: 150%;
+      margin-top: 50%;
+  }
+
+  .subtitle {
+      font-size: 90%;
+      margin-top: 5%;
+  }
+
+  .btn-group {
+      margin-top: 5%;
+  }
+}

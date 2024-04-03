@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GSHub | ChatRoom</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.indigo.min.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='chat.css') }}">
+</head>
+
+<body>
+    <div class="container">
+        <div class="chat-container">
+            <div id="chat-title" class="chat-title">Welcome to Gemini!</div>
+            <div id="chat-box"></div>
+            <span aria-busy="true" id="loading" style="display: none;">Generating response...</span>
+        </div>
+        <div id="chat-options" class="chat-options">
+        </div>
+        <textarea type="text" id="user-input" class="message-input" placeholder="Type your message here..."></textarea>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='highlight.min.css') }}">
+    <script src="{{ url_for('static', filename='script/highlight.min.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            document.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        });
+
+        const chatBox = document.getElementById('chat-box');
+        const userInput = document.getElementById('user-input');
+        const codeBlockRegex = /```(\w+)?\n([\s\S]*?)\n```/;
+        const codeBlockTemplate = '<pre><code class="language-$1">$2</code></pre>';
+
+        userInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                processUserInput();
+            }
+        });
+
+        function addUserMessage(message) {
+            const userMessage = document.createElement('div');
+            userMessage.classList.add('user-message');
+            userMessage.textContent = `You: ${message}`;
+
+            const matches = message.match(codeBlockRegex);
+            if (matches) {
+                userMessage.innerHTML = message.replace(codeBlockRegex, codeBlockTemplate);
+            } else {
+                userMessage.innerHTML = marked.parse(userMessage.textContent);
+            }
+
+            chatBox.appendChild(userMessage);
+        }
+
+        function addBotMessage(message) {
+            const botMessage = document.createElement('div');
+            botMessage.classList.add('bot-message');
+            botMessage.textContent = `Gemini: ${message}`;
+
+            const matches = message.match(codeBlockRegex);
+            if (matches) {
+                botMessage.innerHTML = message.replace(codeBlockRegex, codeBlockTemplate);
+            } else {
+                botMessage.innerHTML = marked.parse(botMessage.textContent);
+            }
+
+            chatBox.appendChild(botMessage);
+        }
+
+        function processUserInput() {
+            const userInputValue = userInput.value;
+            const chatTitle = document.getElementById('chat-title');
+            const loadingSpinner = document.getElementById('loading');
+            chatTitle.style.display = 'none';
+
+            if (userInputValue !== '') {
+                addUserMessage(userInputValue);
+                setTimeout(function () {
+                    loadingSpinner.style.display = 'block';
+                    loadingSpinner.style.marginBottom = '20px';
+                    fetch("/api/v1/get-response/gemini", {
+                        method: "POST",
+                        body: JSON.stringify({
+                            text: userInputValue
+                        })
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            loadingSpinner.style.display = 'none';
+                            addBotMessage(data.response);
+                        });
+                }, 500);
+                userInput.value = '';
+                chatBox.scrollTop = chatBox.scrollHeight;
+                userInput.value = '';
+                chatBox.scrollTop = chatBox.scrollHeight;
+            } else if (userInputValue === '') {
+                addBotMessage('Woops! I think you forgot to type your message, Is there anything I can help you with?');
+                return;
+            }
+        }
+    </script>
+</body>
+
+</html>
